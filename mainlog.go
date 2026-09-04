@@ -2,6 +2,7 @@ package loggerstdoutlibrary
 
 import (
 	"encoding/json"
+	"fmt"
 	"os"
 	"strconv"
 	"sync"
@@ -135,6 +136,13 @@ func (m *MainLog) write() {
 		return
 	}
 	os.Stdout.Write(append(b, '\n'))
+}
+
+func (m *MainLog) SafeFinishOnPanic() {
+	if r := recover(); r != nil {
+		m.FinishMain("500", fmt.Sprintf("panic recovered: %v", r))
+		panic(r) // re-throw, jangan ditelan diam-diam
+	}
 }
 
 func formatDuration(ms float64) string {
