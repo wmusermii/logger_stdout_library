@@ -132,10 +132,12 @@ func (m *MainLog) FinishMain(responseCode, responseMessage string) {
 func (m *MainLog) write() {
 	b, err := json.Marshal(m.entry)
 	if err != nil {
-		os.Stdout.WriteString("logger_stdout_library: marshal error: " + err.Error() + "\n")
+		os.Stderr.WriteString("logger_stdout_library: marshal error: " + err.Error() + "\n")
 		return
 	}
-	os.Stdout.Write(append(b, '\n'))
+	if err := getWriter().Write(b, m.entry.Resource.ServiceName); err != nil {
+		os.Stderr.WriteString("logger_stdout_library: write error: " + err.Error() + "\n")
+	}
 }
 
 func (m *MainLog) SafeFinishOnPanic() {
