@@ -13,17 +13,12 @@ const (
 	OutputFile   OutputType = "file"
 )
 
-// Config adalah konfigurasi output logger.
 type Config struct {
-	Output OutputType
-	LogDir string // wajib diisi kalau Output == file
+	Output      OutputType
+	LogDir      string
+	ServiceName string // baru: nama file log, dikontrol dari .env
 }
 
-// LoadConfigFromEnv membaca konfigurasi dari environment variable:
-//
-//	LOG_OUTPUT = "stdout" | "file"   (default: "stdout" jika kosong)
-//	LOG_DIR    = path direktori tujuan log (wajib kalau LOG_OUTPUT=file,
-//	             boleh berupa path ke shared/mounted network drive)
 func LoadConfigFromEnv() (Config, error) {
 	raw := strings.ToLower(strings.TrimSpace(os.Getenv("LOG_OUTPUT")))
 	if raw == "" {
@@ -48,6 +43,12 @@ func LoadConfigFromEnv() (Config, error) {
 			return Config{}, fmt.Errorf("LOG_DIR wajib diisi ketika LOG_OUTPUT=file")
 		}
 		cfg.LogDir = dir
+
+		serviceName := strings.TrimSpace(os.Getenv("LOG_SERVICE_NAME"))
+		if serviceName == "" {
+			return Config{}, fmt.Errorf("LOG_SERVICE_NAME wajib diisi ketika LOG_OUTPUT=file")
+		}
+		cfg.ServiceName = serviceName
 	}
 
 	return cfg, nil

@@ -135,7 +135,7 @@ func (m *MainLog) write() {
 		os.Stderr.WriteString("logger_stdout_library: marshal error: " + err.Error() + "\n")
 		return
 	}
-	if err := getWriter().Write(b, m.entry.Resource.ServiceName); err != nil {
+	if err := getWriter().Write(b); err != nil {
 		os.Stderr.WriteString("logger_stdout_library: write error: " + err.Error() + "\n")
 	}
 }

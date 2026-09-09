@@ -4,16 +4,12 @@ import "sync"
 
 var (
 	globalMu     sync.RWMutex
-	globalWriter Writer = &StdoutWriter{} // default: tetap stdout kalau Init() tidak dipanggil
+	globalWriter Writer = &StdoutWriter{} // default: stdout kalau Init() belum dipanggil
 )
 
-// Init membaca konfigurasi dari environment variable (LOG_OUTPUT, LOG_DIR)
-// dan menyiapkan writer yang sesuai. WAJIB dipanggil sekali di awal main(),
-// sebelum BeginMain pertama kali dipakai.
-//
-// Kalau Init() tidak dipanggil sama sekali, logger tetap jalan seperti
-// sebelumnya (output ke stdout) — jadi tidak ada breaking change untuk
-// service yang belum mau pakai fitur file logging.
+// Init membaca konfigurasi dari environment variable (LOG_OUTPUT, LOG_DIR,
+// LOG_SERVICE_NAME) dan menyiapkan writer yang sesuai. WAJIB dipanggil
+// sekali di awal main(), sebelum BeginMain pertama kali dipakai.
 func Init() error {
 	cfg, err := LoadConfigFromEnv()
 	if err != nil {
@@ -22,14 +18,13 @@ func Init() error {
 	return InitWithConfig(cfg)
 }
 
-// InitWithConfig sama seperti Init, tapi config di-supply manual (berguna
-// untuk unit test, atau kalau service tidak mau bergantung pada env var).
+// InitWithConfig sama seperti Init, tapi config di-supply manual.
 func InitWithConfig(cfg Config) error {
 	var w Writer
 
 	switch cfg.Output {
 	case OutputFile:
-		fw, err := NewFileWriter(cfg.LogDir)
+		fw, err := NewFileWriter(cfg.LogDir, cfg.ServiceName)
 		if err != nil {
 			return err
 		}
@@ -50,8 +45,7 @@ func getWriter() Writer {
 	return globalWriter
 }
 
-// Close menutup writer aktif (relevan untuk FileWriter, supaya file
-// ter-flush dengan benar). Panggil via defer di main().
+// Close menutup writer aktif (relevan untuk FileWriter).
 func Close() error {
 	globalMu.RLock()
 	defer globalMu.RUnlock()
